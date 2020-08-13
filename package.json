@@ -1,0 +1,40 @@
+{
+    "name": "@justinjoyn/places-search",
+    "version": "1.0.6",
+    "description": "A library that can search places of interest using any source.",
+    "main": "index.js",
+    "scripts": {
+        "lint": "eslint . && prettier --write ."
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/justinjoyn/places-search.git"
+    },
+    "keywords": [
+        "google",
+        "places",
+        "api",
+        "search",
+        "places",
+        "nearby"
+    ],
+    "author": "Justin Joy",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/justinjoyn/places-search/issues"
+    },
+    "homepage": "https://github.com/justinjoyn/places-search#readme",
+    "dependencies": {
+        "lodash": "^4.17.19",
+        "prop-types": "^15.7.2",
+        "qs": "^6.9.4"
+    },
+    "devDependencies": {
+        "@react-native-community/eslint-config": "^2.0.0",
+        "eslint": "^7.6.0",
+        "prettier": "^2.0.5"
+    },
+    "peerDependencies": {
+        "react-native": ">= 0.60"
+    }
+}
