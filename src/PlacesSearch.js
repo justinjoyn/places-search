@@ -1,7 +1,7 @@
 import { debounce, intersection, uniqBy } from 'lodash';
 import Qs from 'qs';
 import React, { Component } from 'react';
-import { FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TextInput, View, TouchableHighlight, TouchableOpacity } from 'react-native';
 
 const GOOGLE_PLACES_API = 'https://maps.googleapis.com/maps/api/place';
 const GOOGLE_NEARBY_API = `${GOOGLE_PLACES_API}/nearbysearch/json`;
@@ -20,7 +20,7 @@ class PlacesSearch extends Component {
         };
 
         this.processResults = this.processResults.bind(this);
-        this.searchPlace = debounce(this.searchPlace, 1000);
+        this.searchPlace = debounce(this.searchPlace, this.props.debounce);
     }
 
     get allSearchResults() {
@@ -31,7 +31,7 @@ class PlacesSearch extends Component {
 
     setSearchTerm(text) {
         this.setState({ searchTerm: text });
-        if (text && text.length >= 2) {
+        if (text && text.length >= this.props.minLength) {
             this.setState({ searching: true });
             this.searchPlace();
         } else {
@@ -80,6 +80,8 @@ class PlacesSearch extends Component {
                 .catch(function (error) {
                     this.setState({ searchResults: null, searching: false, error: error });
                 });
+        } else {
+            this.setState({ searchResults: [], searching: false });
         }
     }
 
@@ -88,15 +90,17 @@ class PlacesSearch extends Component {
         this.setState({ searchResults: results, searching: false });
     }
 
+
+
     aggregateResults(data) {
         const results = [];
         if (data && data.length > 0) {
-            data.forEach((response) => {
+            data.forEach((response, index) => {
                 if (response.status === 'OK') {
                     if (response?.results && response.results?.length > 0) {
                         response.results.forEach((result) => {
                             const matchedTypes = intersection(this.props.types, result.types);
-                            if (result.place_id && matchedTypes.length > 0) {
+                            if (result.place_id && (matchedTypes.length > 0 || this.props.types.length === 0)) {
                                 results.push({
                                     place_id: result.place_id,
                                     name: result.name,
@@ -108,7 +112,7 @@ class PlacesSearch extends Component {
                     } else if (response?.predictions && response.predictions?.length > 0) {
                         response.predictions.forEach((result) => {
                             const matchedTypes = intersection(this.props.types, result.types);
-                            if (result.place_id && matchedTypes.length > 0) {
+                            if (result.place_id && (matchedTypes.length > 0 || this.props.types.length === 0)) {
                                 results.push({
                                     place_id: result.place_id,
                                     name: result.structured_formatting?.main_text,
@@ -126,11 +130,14 @@ class PlacesSearch extends Component {
 
     renderResultItem(item, index) {
         if (this.props.renderResultItem) return this.props.renderResultItem(item, index);
-        return (
+        return (<TouchableHighlight
+            onPress={() => this.props.onSelect(item)}
+        >
             <View style={styles.resultItemContainer}>
                 <Text style={styles.placeName}>{item.name}</Text>
                 <Text style={styles.palceAddress}>{item.address}</Text>
             </View>
+        </TouchableHighlight>
         );
     }
 
@@ -153,8 +160,8 @@ class PlacesSearch extends Component {
                     {searching
                         ? `Searching for places...`
                         : searchTerm !== ''
-                        ? `Sorry, we couldn't find any places matching "${searchTerm}"`
-                        : 'Start typing to search for places'}
+                            ? `Sorry, we couldn't find any places matching "${searchTerm}"`
+                            : 'Start typing to search for places'}
                 </Text>
             </View>
         );
@@ -167,16 +174,25 @@ class PlacesSearch extends Component {
     }
 
     render() {
-        const { containerStyle, inputStyle, resultsContainerStyle, autoFocus } = this.props;
+        const { containerStyle, inputStyle, resultsContainerStyle, autoFocus, placeholder, returnKeyType, placeholderTextColor } = this.props;
         return (
             <View style={[styles.container, { ...containerStyle }]}>
-                <TextInput
-                    autoFocus={autoFocus}
-                    placeholder={'Search'}
-                    placeholderTextColor={'#DDD'}
-                    onChangeText={(text) => this.setSearchTerm(text)}
-                    style={[styles.searchInput, { ...inputStyle }]}
-                />
+                <View style={styles.textInputContainer}>
+                    <TextInput
+                        autoFocus={autoFocus}
+                        placeholder={placeholder}
+                        placeholderTextColor={placeholderTextColor}
+                        returnKeyType={returnKeyType}
+                        onChangeText={(text) => this.setSearchTerm(text)}
+                        style={[styles.searchInput, { ...inputStyle }]}
+                    />
+                    <TouchableOpacity
+                        onPress={() => this.props.onCancel()}
+                        style={styles.cancelBtn}
+                        activeOpacity={0.8}>
+                        <Text style={styles.cancelBtnText}>Cancel</Text>
+                    </TouchableOpacity>
+                </View>
                 <FlatList
                     showsVerticalScrollIndicator={false}
                     data={this.allSearchResults}
@@ -199,12 +215,24 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         padding: 16
     },
+    cancelBtn: {
+        justifyContent: 'center',
+        paddingLeft: 12
+    },
+    textInputContainer: { flexDirection: 'row' },
     searchInput: {
         paddingVertical: 6,
         paddingHorizontal: 8,
         backgroundColor: '#FFF',
         borderRadius: 6,
+        width: '80%',
         color: '#000'
+    },
+    cancelBtnText: {
+        color: 'white',
+        textAlign: 'right',
+        fontSize: 18,
+        fontFamily: 'AvenirNext-Medium'
     },
     resultsList: {
         flex: 1
@@ -243,10 +271,16 @@ const styles = StyleSheet.create({
 });
 
 PlacesSearch.defaultProps = {
+    onSearch: () => '',
+    onSelect: () => '',
+    onCancel: () => '',
     autoFocus: false,
     debounce: 1000,
     editable: true,
     types: [],
+    placeholder: '',
+    returnKeyType: 'search',
+    minLength: 3,
     onSelectPlace: null,
     containerStyle: {},
     inputStyle: {},
@@ -256,7 +290,6 @@ PlacesSearch.defaultProps = {
     renderListDivider: null,
     renderListEmptyComponent: null,
     renderListFooterComponent: null,
-    onSearch: null,
     externalResults: null,
     nearbyApiParams: {
         key: null,
