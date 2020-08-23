@@ -1,6 +1,6 @@
 {
     "name": "@justinjoyn/places-search",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "description": "A library that can search places of interest using any source.",
     "main": "index.js",
     "scripts": {
