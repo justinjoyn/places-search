@@ -90,8 +90,6 @@ class PlacesSearch extends Component {
         this.setState({ searchResults: results, searching: false });
     }
 
-
-
     aggregateResults(data) {
         const results = [];
         if (data && data.length > 0) {
@@ -130,14 +128,13 @@ class PlacesSearch extends Component {
 
     renderResultItem(item, index) {
         if (this.props.renderResultItem) return this.props.renderResultItem(item, index);
-        return (<TouchableHighlight
-            onPress={() => this.props.onSelect(item)}
-        >
-            <View style={styles.resultItemContainer}>
-                <Text style={styles.placeName}>{item.name}</Text>
-                <Text style={styles.palceAddress}>{item.address}</Text>
-            </View>
-        </TouchableHighlight>
+        return (
+            <TouchableHighlight onPress={() => this.props.onSelect(item)}>
+                <View style={styles.resultItemContainer}>
+                    <Text style={styles.placeName}>{item.name}</Text>
+                    <Text style={styles.palceAddress}>{item.address}</Text>
+                </View>
+            </TouchableHighlight>
         );
     }
 
@@ -160,8 +157,8 @@ class PlacesSearch extends Component {
                     {searching
                         ? `Searching for places...`
                         : searchTerm !== ''
-                            ? `Sorry, we couldn't find any places matching "${searchTerm}"`
-                            : 'Start typing to search for places'}
+                        ? `Sorry, we couldn't find any places matching "${searchTerm}"`
+                        : 'Start typing to search for places'}
                 </Text>
             </View>
         );
@@ -174,7 +171,15 @@ class PlacesSearch extends Component {
     }
 
     render() {
-        const { containerStyle, inputStyle, resultsContainerStyle, autoFocus, placeholder, returnKeyType, placeholderTextColor } = this.props;
+        const {
+            containerStyle,
+            inputStyle,
+            resultsContainerStyle,
+            autoFocus,
+            placeholder,
+            returnKeyType,
+            placeholderTextColor
+        } = this.props;
         return (
             <View style={[styles.container, { ...containerStyle }]}>
                 <View style={styles.textInputContainer}>
@@ -271,9 +276,9 @@ const styles = StyleSheet.create({
 });
 
 PlacesSearch.defaultProps = {
-    onSearch: () => '',
-    onSelect: () => '',
-    onCancel: () => '',
+    onSearch: () => null,
+    onSelect: () => null,
+    onCancel: () => null,
     autoFocus: false,
     debounce: 1000,
     editable: true,
@@ -281,15 +286,15 @@ PlacesSearch.defaultProps = {
     placeholder: '',
     returnKeyType: 'search',
     minLength: 3,
-    onSelectPlace: null,
+    onSelectPlace: () => null,
     containerStyle: {},
     inputStyle: {},
     resultsContainerStyle: {},
-    renderResultItem: null,
-    resultKeyExtractor: null,
-    renderListDivider: null,
-    renderListEmptyComponent: null,
-    renderListFooterComponent: null,
+    renderResultItem: () => null,
+    resultKeyExtractor: () => null,
+    renderListDivider: () => null,
+    renderListEmptyComponent: () => null,
+    renderListFooterComponent: () => null,
     externalResults: null,
     nearbyApiParams: {
         key: null,
