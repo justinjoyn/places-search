@@ -17,16 +17,30 @@ const App = () => {
             });
     };
 
+    const onSelect = (item) => {
+        console.log('Item selected:', item);
+    };
+
+    const onCancel = () => {
+        console.log('Cancel');
+    };
+
     return (
         <>
             <StatusBar barStyle="dark-content" />
             <SafeAreaView style={styles.container}>
                 <PlacesSearch
+                    onSelect={onSelect}
+                    onCancel={onCancel}
                     types={['restaurant', 'food']}
                     debounce={1000}
                     onSearch={onSearch}
                     externalResults={palces}
                     autoFocus={true}
+                    placeholder="Search Business..."
+                    placeholderTextColor="#8E8E93"
+                    minLength={2}
+                    returnKeyType="search"
                     nearbyApiParams={{
                         key: API_KEY,
                         location: LOCATION,

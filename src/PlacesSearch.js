@@ -193,9 +193,9 @@ class PlacesSearch extends Component {
                     />
                     <TouchableOpacity
                         onPress={() => this.props.onCancel()}
-                        style={styles.cancelBtn}
+                        style={styles.cancelButton}
                         activeOpacity={0.8}>
-                        <Text style={styles.cancelBtnText}>Cancel</Text>
+                        <Text style={styles.cancelButtonText}>Cancel</Text>
                     </TouchableOpacity>
                 </View>
                 <FlatList
@@ -220,11 +220,9 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         padding: 16
     },
-    cancelBtn: {
-        justifyContent: 'center',
-        paddingLeft: 12
+    textInputContainer: {
+        flexDirection: 'row'
     },
-    textInputContainer: { flexDirection: 'row' },
     searchInput: {
         paddingVertical: 6,
         paddingHorizontal: 8,
@@ -233,11 +231,14 @@ const styles = StyleSheet.create({
         width: '80%',
         color: '#000'
     },
-    cancelBtnText: {
+    cancelButton: {
+        justifyContent: 'center',
+        paddingHorizontal: 8
+    },
+    cancelButtonText: {
         color: 'white',
         textAlign: 'right',
-        fontSize: 18,
-        fontFamily: 'AvenirNext-Medium'
+        fontSize: 18
     },
     resultsList: {
         flex: 1
