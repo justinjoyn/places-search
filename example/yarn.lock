@@ -996,15 +996,10 @@
     "@types/yargs" "^15.0.0"
     chalk "^3.0.0"
 
-"@justinjoyn/places-search@file:..":
-  version "1.0.7"
-  dependencies:
-    lodash "^4.17.19"
-    prop-types "^15.7.2"
-    qs "^6.9.4"
-
-"@justinjoyn/places-search@file:../":
-  version "1.0.7"
+"@justinjoyn/places-search@*":
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/@justinjoyn/places-search/-/places-search-1.0.8.tgz#c1154b9c0081ca1b66e241911380ea745ab7c5b7"
+  integrity sha512-eyJ2cB5h0w7+Ha/ty5m1x+8iWRGdzjxuJksm2XaKBDiU24LP0NTALHxwzDvcj76aV/ZIC1+OF6hdGWzv/klR4A==
   dependencies:
     lodash "^4.17.19"
     prop-types "^15.7.2"

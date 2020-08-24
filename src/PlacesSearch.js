@@ -1,13 +1,24 @@
 import { debounce, intersection, uniqBy } from 'lodash';
+import PropTypes from 'prop-types';
 import Qs from 'qs';
 import React, { Component } from 'react';
-import { FlatList, StyleSheet, Text, TextInput, View, TouchableHighlight, TouchableOpacity } from 'react-native';
+import {
+    ActivityIndicator,
+    FlatList,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableHighlight,
+    TouchableOpacity,
+    View
+} from 'react-native';
 
 const GOOGLE_PLACES_API = 'https://maps.googleapis.com/maps/api/place';
 const GOOGLE_NEARBY_API = `${GOOGLE_PLACES_API}/nearbysearch/json`;
 const GOOGLE_TEXT_SEARCH_API = `${GOOGLE_PLACES_API}/textsearch/json`;
 const GOOGLE_AUTOCOMPLETE_API = `${GOOGLE_PLACES_API}/autocomplete/json`;
 const GOOGLE_QUERY_AUTOCOMPLETE_API = `${GOOGLE_PLACES_API}/queryautocomplete/json`;
+const GOOGLE_DETAIL_API = `${GOOGLE_PLACES_API}/details/json`;
 
 class PlacesSearch extends Component {
     constructor(props) {
@@ -16,7 +27,9 @@ class PlacesSearch extends Component {
             searchTerm: '',
             searchResults: [],
             searching: false,
-            error: null
+            error: null,
+            fetchingDetail: false,
+            selectedPlaceId: null
         };
 
         this.processResults = this.processResults.bind(this);
@@ -126,13 +139,38 @@ class PlacesSearch extends Component {
         return uniqBy(results, 'place_id');
     }
 
+    onSelect(item) {
+        const params = Qs.stringify({ ...this.props.detailApiParams, place_id: item.place_id });
+        if (this.props.onSelect) {
+            this.setState({
+                fetchingDetail: true,
+                selectedPlaceId: item.place_id
+            });
+            fetch(`${GOOGLE_DETAIL_API}?${params}`)
+                .then((response) => response.json())
+                .then((response) => {
+                    this.setState({
+                        fetchingDetail: false,
+                        selectedPlaceId: null
+                    });
+                    this.props.onSelect(item, response.result);
+                });
+        }
+    }
+
     renderResultItem(item, index) {
+        const { selectedPlaceId, fetchingDetail } = this.state;
         if (this.props.renderResultItem) return this.props.renderResultItem(item, index);
         return (
-            <TouchableHighlight onPress={() => this.props.onSelect(item)}>
-                <View style={styles.resultItemContainer}>
-                    <Text style={styles.placeName}>{item.name}</Text>
-                    <Text style={styles.palceAddress}>{item.address}</Text>
+            <TouchableHighlight onPress={() => this.onSelect(item)}>
+                <View style={styles.resultItem}>
+                    <View style={styles.resultItemContainer}>
+                        <Text style={styles.placeName}>{item.name}</Text>
+                        <Text style={styles.palceAddress}>{item.address}</Text>
+                    </View>
+                    {selectedPlaceId === item.place_id && fetchingDetail && (
+                        <ActivityIndicator color={'#FFF'} size={'small'} />
+                    )}
                 </View>
             </TouchableHighlight>
         );
@@ -140,7 +178,7 @@ class PlacesSearch extends Component {
 
     resultKeyExtractor(item, index) {
         if (this.props.resultKeyExtractor) return this.props.resultKeyExtractor(item, index);
-        return item.place_id;
+        return `${item.place_id}_${index}`;
     }
 
     renderDivider() {
@@ -180,10 +218,12 @@ class PlacesSearch extends Component {
             returnKeyType,
             placeholderTextColor
         } = this.props;
+        const { fetchingDetail } = this.state;
         return (
             <View style={[styles.container, { ...containerStyle }]}>
                 <View style={styles.textInputContainer}>
                     <TextInput
+                        editable={!fetchingDetail}
                         autoFocus={autoFocus}
                         placeholder={placeholder}
                         placeholderTextColor={placeholderTextColor}
@@ -192,6 +232,7 @@ class PlacesSearch extends Component {
                         style={[styles.searchInput, { ...inputStyle }]}
                     />
                     <TouchableOpacity
+                        disabled={fetchingDetail}
                         onPress={() => this.props.onCancel()}
                         style={styles.cancelButton}
                         activeOpacity={0.8}>
@@ -199,6 +240,7 @@ class PlacesSearch extends Component {
                     </TouchableOpacity>
                 </View>
                 <FlatList
+                    keyboardShouldPersistTaps={'handled'}
                     showsVerticalScrollIndicator={false}
                     data={this.allSearchResults}
                     renderItem={({ item, index }) => this.renderResultItem(item, index)}
@@ -229,14 +271,15 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFF',
         borderRadius: 6,
         width: '80%',
-        color: '#000'
+        color: '#000',
+        flex: 1
     },
     cancelButton: {
         justifyContent: 'center',
-        paddingHorizontal: 8
+        marginLeft: 8
     },
     cancelButtonText: {
-        color: 'white',
+        color: '#FFF',
         textAlign: 'right',
         fontSize: 18
     },
@@ -247,9 +290,13 @@ const styles = StyleSheet.create({
         paddingTop: 16,
         paddingBottom: 50
     },
+    resultItem: {
+        flexDirection: 'row'
+    },
     resultItemContainer: {
         flexDirection: 'column',
-        paddingVertical: 4
+        paddingVertical: 4,
+        flex: 1
     },
     placeName: {
         fontSize: 16,
@@ -262,7 +309,7 @@ const styles = StyleSheet.create({
     },
     divider: {
         backgroundColor: '#555555',
-        height: StyleSheet.hairlineWidth,
+        height: 1,
         marginVertical: 4
     },
     listEmptyView: {
@@ -276,10 +323,38 @@ const styles = StyleSheet.create({
     }
 });
 
+PlacesSearch.propTypes = {
+    onSearch: PropTypes.func,
+    onSelect: PropTypes.func,
+    onCancel: PropTypes.func,
+    onSelectPlace: PropTypes.func,
+    renderResultItem: PropTypes.func,
+    resultKeyExtractor: PropTypes.func,
+    renderListDivider: PropTypes.func,
+    renderListEmptyComponent: PropTypes.func,
+    renderListFooterComponent: PropTypes.func,
+    autoFocus: PropTypes.bool,
+    debounce: PropTypes.number,
+    editable: PropTypes.bool,
+    types: PropTypes.array,
+    placeholder: PropTypes.string,
+    returnKeyType: PropTypes.string,
+    minLength: PropTypes.number,
+    containerStyle: PropTypes.object,
+    inputStyle: PropTypes.object,
+    resultsContainerStyle: PropTypes.object,
+    externalResults: PropTypes.array,
+    nearbyApiParams: PropTypes.object,
+    textSearchApiParams: PropTypes.object,
+    autoCompleteApiParams: PropTypes.object,
+    queryAutoCompleteApiParams: PropTypes.object,
+    detailApiParams: PropTypes.object
+};
+
 PlacesSearch.defaultProps = {
-    onSearch: () => null,
-    onSelect: () => null,
-    onCancel: () => null,
+    onSearch: null,
+    onSelect: null,
+    onCancel: null,
     autoFocus: false,
     debounce: 1000,
     editable: true,
@@ -287,15 +362,15 @@ PlacesSearch.defaultProps = {
     placeholder: '',
     returnKeyType: 'search',
     minLength: 3,
-    onSelectPlace: () => null,
+    onSelectPlace: null,
     containerStyle: {},
     inputStyle: {},
     resultsContainerStyle: {},
-    renderResultItem: () => null,
-    resultKeyExtractor: () => null,
-    renderListDivider: () => null,
-    renderListEmptyComponent: () => null,
-    renderListFooterComponent: () => null,
+    renderResultItem: null,
+    resultKeyExtractor: null,
+    renderListDivider: null,
+    renderListEmptyComponent: null,
+    renderListFooterComponent: null,
     externalResults: null,
     nearbyApiParams: {
         key: null,
