@@ -17,8 +17,8 @@ const App = () => {
             });
     };
 
-    const onSelect = (item) => {
-        console.log('Item selected:', item);
+    const onSelect = (item, detail) => {
+        console.log('Item selected:', item, detail);
     };
 
     const onCancel = () => {
